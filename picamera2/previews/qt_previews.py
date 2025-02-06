@@ -3,6 +3,10 @@ import threading
 from enum import Enum
 from queue import Queue
 
+from picamera2.previews.qt import QPicamera2 as QPicamera2_Qt5, QGlPicamera2 as QGlPicamera2_Qt5
+from picamera2.previews.qt_pyside6 import QPicamera2 as QPicamera2_PySide6, QGlPicamera2 as QGlPicamera2_PySide6
+from picamera2.previews.qt_pyside2 import QPicamera2 as QPicamera2_PySide2, QGlPicamera2 as QGlPicamera2_PySide2
+
 
 class Command(Enum):
     CREATE = 1
@@ -142,3 +146,23 @@ class QtGlPreview(QtPreviewBase):
 
     def get_title(self):
         return "QtGlPreview"
+
+
+def start_preview(preview_type, picam2, width=640, height=480, transform=None):
+    if preview_type == 'qt5':
+        preview = QtPreview()
+    elif preview_type == 'pyside6':
+        preview = QtPreviewBase()
+        preview.make_picamera2_widget = lambda picam2, width=640, height=480, transform=None: QPicamera2_PySide6(
+            picam2, width=width, height=height, transform=transform, preview_window=preview)
+        preview.get_title = lambda: "PySide6Preview"
+    elif preview_type == 'pyside2':
+        preview = QtPreviewBase()
+        preview.make_picamera2_widget = lambda picam2, width=640, height=480, transform=None: QPicamera2_PySide2(
+            picam2, width=width, height=height, transform=transform, preview_window=preview)
+        preview.get_title = lambda: "PySide2Preview"
+    else:
+        raise ValueError("Invalid preview type. Must be 'qt5', 'pyside6', or 'pyside2'.")
+
+    preview.start(picam2)
+    return preview
